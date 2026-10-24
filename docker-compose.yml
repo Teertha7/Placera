@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: placera-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-placera_db}
+      POSTGRES_USER: ${POSTGRES_USER:-placera_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-placera_secure_pass}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-placera_user} -d ${POSTGRES_DB:-placera_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - placera-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: placera-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-placera_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-placera_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-placera_secure_pass}
+      PLACERA_JWT_SECRET: ${PLACERA_JWT_SECRET:-4c61636572615365637572654a57545365637265744b657932303236466f7243616d707573}
+      PLACERA_ADMIN_EMAIL: ${PLACERA_ADMIN_EMAIL:-admin@placera.edu}
+      PLACERA_ADMIN_PASSWORD: ${PLACERA_ADMIN_PASSWORD:-AdminPlacera#2026!}
+      PLACERA_CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000
+      PLACERA_UPLOAD_DIR: /app/uploads/resumes
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - resumes_data:/app/uploads/resumes
+    networks:
+      - placera-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: placera-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks:
+      - placera-network
+
+volumes:
+  postgres_data:
+    driver: local
+  resumes_data:
+    driver: local
+
+networks:
+  placera-network:
+    driver: bridge

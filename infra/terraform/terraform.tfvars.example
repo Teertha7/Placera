@@ -1,0 +1,17 @@
+# Placera Example Terraform Variables
+# Copy to terraform.tfvars for deployment (never commit actual .tfvars)
+
+project_name            = "placera"
+environment             = "dev"
+location                = "centralindia"
+enable_managed_database = false  # Set to false to avoid consuming student cloud credits
+
+db_admin_username       = "placeraadmin"
+db_admin_password       = "YourStrongDbPassword2026!#"
+
+tags = {
+  Project     = "Placera"
+  Environment = "Student-Academic"
+  CostCenter  = "Zero-Spending-Student-Budget"
+  ManagedBy   = "Terraform"
+}
