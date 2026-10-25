@@ -16,9 +16,10 @@ jobs:
   deploy-backend:
     name: Deploy Backend (ACR & Azure Container Apps)
     runs-on: ubuntu-latest
-    # Execute only after successful CI on main, and only when Azure OIDC credentials are configured
+    # Execute only after successful CI on main, and only when Azure OIDC credentials are configured in repository variables
     if: >-
-      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') &&
+      ((github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') ||
+       github.event_name == 'workflow_dispatch') &&
       vars.AZURE_CLIENT_ID != '' &&
       vars.AZURE_TENANT_ID != '' &&
       vars.AZURE_SUBSCRIPTION_ID != ''
@@ -74,13 +75,27 @@ jobs:
   deploy-frontend:
     name: Deploy Frontend (Azure Static Web Apps)
     runs-on: ubuntu-latest
-    # Execute only after successful CI on main, and only when Static Web Apps token is configured
+    # Execute only after successful CI on main (or manual dispatch). Secrets are evaluated safely in steps.
     if: >-
-      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') &&
-      secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != ''
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') ||
+      github.event_name == 'workflow_dispatch'
 
     steps:
+      - name: Check Azure Static Web Apps Token Configuration
+        id: check_token
+        env:
+          SWA_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        run: |
+          if [ -n "$SWA_TOKEN" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+            echo "Azure Static Web Apps deployment token detected."
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Frontend Deployment Skipped::AZURE_STATIC_WEB_APPS_API_TOKEN is not configured in repository secrets. Skipping frontend deployment."
+          fi
+
       - name: Resolve Target Git Commit SHA
+        if: steps.check_token.outputs.has_token == 'true'
         id: commit_meta
         run: |
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
@@ -91,11 +106,13 @@ jobs:
           echo "sha=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout Source Code
+        if: steps.check_token.outputs.has_token == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.commit_meta.outputs.sha }}
 
       - name: Set up Node.js 22
+        if: steps.check_token.outputs.has_token == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -103,12 +120,14 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies & Build Frontend Bundle
+        if: steps.check_token.outputs.has_token == 'true'
         run: |
           cd frontend
           npm ci
           npm run build
 
       - name: Deploy Frontend to Azure Static Web Apps
+        if: steps.check_token.outputs.has_token == 'true'
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
