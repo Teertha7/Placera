@@ -71,7 +71,8 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initAdminUser() {
-        if (!userRepository.existsByEmailIgnoreCase(adminEmail)) {
+        var existing = userRepository.findByEmailIgnoreCase(adminEmail);
+        if (existing.isEmpty()) {
             User admin = new User(
                     adminEmail.toLowerCase().trim(),
                     passwordEncoder.encode(adminPassword),
@@ -82,6 +83,11 @@ public class DataInitializer implements CommandLineRunner {
             );
             userRepository.save(admin);
             log.info("Initialized bootstrap Placement Administrator account: {}", adminEmail);
+        } else {
+            User admin = existing.get();
+            admin.setPasswordHash(passwordEncoder.encode(adminPassword));
+            userRepository.save(admin);
+            log.info("Synchronized password for bootstrap Placement Administrator account: {}", adminEmail);
         }
     }
 
