@@ -18,13 +18,14 @@ WORKDIR /app
 
 # Run as non-privileged system user for container security
 RUN addgroup -S placera && adduser -S placera -G placera
-USER placera:placera
+
+# Configure uploads directory and permissions
+RUN mkdir -p /app/uploads/resumes && chown -R placera:placera /app
 
 # Copy built artifact
-COPY --from=builder /build/target/*.jar app.jar
+COPY --chown=placera:placera --from=builder /build/target/*.jar app.jar
 
-# Configure uploads volume mount
-RUN mkdir -p /app/uploads/resumes
+USER placera:placera
 
 EXPOSE 8080
 
