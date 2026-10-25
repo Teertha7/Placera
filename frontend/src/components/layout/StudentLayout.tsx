@@ -29,10 +29,10 @@ export const StudentLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-      {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex-shrink-0 select-none">
-        <div className="p-6 border-b border-slate-800">
+    <div className="h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden">
+      {/* Sidebar for Desktop (Fixed in place, never scrolls with page) */}
+      <aside className="hidden md:flex flex-col w-64 h-full bg-slate-900 border-r border-slate-800 text-slate-300 flex-shrink-0 select-none">
+        <div className="p-6 border-b border-slate-800 flex-shrink-0">
           <Logo to="/student" inverted size="md" showTagline />
         </div>
 
@@ -58,7 +58,7 @@ export const StudentLayout: React.FC = () => {
         </nav>
 
         {/* User Info & Logout */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40">
+        <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-9 h-9 rounded-full bg-blue-600/30 text-blue-400 border border-blue-500/40 flex items-center justify-center font-bold text-sm flex-shrink-0">
@@ -80,10 +80,10 @@ export const StudentLayout: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Content Area (Independent scroll container) */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-y-auto">
         {/* Top Navbar */}
-        <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 flex items-center justify-between px-4 sm:px-8">
+        <header className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur border-b border-slate-200/90 flex items-center justify-between px-4 sm:px-8 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -119,7 +119,7 @@ export const StudentLayout: React.FC = () => {
 
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-b border-slate-800 p-4 space-y-1">
+          <div className="md:hidden bg-slate-900 border-b border-slate-800 p-4 space-y-1 flex-shrink-0">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}

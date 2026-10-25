@@ -146,7 +146,16 @@ export const AnalyticsReportsPage: React.FC = () => {
                   <XAxis dataKey="department" stroke="#64748b" fontSize={11} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff' }}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderRadius: '12px',
+                      border: '1px solid #334155',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)',
+                      color: '#ffffff',
+                      padding: '8px 12px',
+                    }}
+                    itemStyle={{ color: '#ffffff', fontSize: '12px', fontWeight: 600 }}
+                    labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600, marginBottom: '2px' }}
                   />
                   <Bar dataKey="offers" fill="#10B981" radius={[6, 6, 0, 0]} name="Offers" />
                 </BarChart>
@@ -172,7 +181,16 @@ export const AnalyticsReportsPage: React.FC = () => {
                   <XAxis dataKey="graduationYear" stroke="#64748b" fontSize={11} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff' }}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderRadius: '12px',
+                      border: '1px solid #334155',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)',
+                      color: '#ffffff',
+                      padding: '8px 12px',
+                    }}
+                    itemStyle={{ color: '#ffffff', fontSize: '12px', fontWeight: 600 }}
+                    labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600, marginBottom: '2px' }}
                   />
                   <Bar dataKey="studentsPlaced" fill="#6366F1" radius={[6, 6, 0, 0]} name="Placed Students" />
                 </BarChart>

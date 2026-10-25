@@ -214,7 +214,17 @@ export const AdminDashboard: React.FC = () => {
                   <XAxis dataKey="department" stroke="#64748b" fontSize={11} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff' }}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderRadius: '12px',
+                      border: '1px solid #334155',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)',
+                      color: '#ffffff',
+                      padding: '8px 12px',
+                    }}
+                    itemStyle={{ color: '#ffffff', fontSize: '12px', fontWeight: 600 }}
+                    labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600, marginBottom: '2px' }}
+                    cursor={{ fill: 'rgba(59, 130, 246, 0.08)' }}
                   />
                   <Bar dataKey="count" fill="#3B82F6" radius={[6, 6, 0, 0]} name="Applications" />
                 </BarChart>
@@ -246,16 +256,32 @@ export const AdminDashboard: React.FC = () => {
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={({ status, count }) => `${status}: ${count}`}
+                    label={({ status, count }) => `${String(status).replace(/_/g, ' ')}: ${count}`}
                   >
                     {stats.statusDistribution.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff' }}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderRadius: '12px',
+                      border: '1px solid #334155',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)',
+                      color: '#ffffff',
+                      padding: '8px 12px',
+                    }}
+                    itemStyle={{ color: '#ffffff', fontSize: '12px', fontWeight: 600 }}
+                    labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600, marginBottom: '2px' }}
+                    formatter={(value: any, name: any) => [`${value} Candidate(s)`, String(name).replace(/_/g, ' ')]}
                   />
-                  <Legend />
+                  <Legend
+                    formatter={(value) => (
+                      <span className="text-xs font-semibold text-slate-700">
+                        {String(value).replace(/_/g, ' ')}
+                      </span>
+                    )}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

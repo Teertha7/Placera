@@ -32,14 +32,14 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-      {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex-shrink-0 select-none">
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+    <div className="h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden">
+      {/* Sidebar for Desktop (Fixed in place, never scrolls with page) */}
+      <aside className="hidden md:flex flex-col w-64 h-full bg-slate-900 border-r border-slate-800 text-slate-300 flex-shrink-0 select-none">
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
           <Logo to="/admin" inverted size="md" showTagline />
         </div>
 
-        <div className="px-6 py-3 bg-blue-950/40 border-b border-slate-800 flex items-center gap-2">
+        <div className="px-6 py-3 bg-blue-950/40 border-b border-slate-800 flex items-center gap-2 flex-shrink-0">
           <ShieldCheck className="w-4 h-4 text-blue-400" />
           <span className="text-[11px] font-bold uppercase tracking-wider text-blue-300">
             Placement Cell Admin
@@ -68,7 +68,7 @@ export const AdminLayout: React.FC = () => {
         </nav>
 
         {/* User Info & Logout */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40">
+        <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm flex-shrink-0">
@@ -90,10 +90,10 @@ export const AdminLayout: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Content Area (Independent scroll container) */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-y-auto">
         {/* Top Navbar */}
-        <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 flex items-center justify-between px-4 sm:px-8">
+        <header className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur border-b border-slate-200/90 flex items-center justify-between px-4 sm:px-8 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -126,7 +126,7 @@ export const AdminLayout: React.FC = () => {
 
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-b border-slate-800 p-4 space-y-1">
+          <div className="md:hidden bg-slate-900 border-b border-slate-800 p-4 space-y-1 flex-shrink-0">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
