@@ -215,9 +215,10 @@ terraform plan
 Comprehensive technical guides are available in the [`docs/`](docs/) directory:
 
 - [**System Architecture Document**](docs/architecture.md): Detailed component design, data flows, and state machine specifications.
+- [**CI/CD Pipeline & Azure Architecture**](docs/cicd-pipeline.md): Comprehensive guide to GitHub Actions, Azure OIDC, ACR, ACA, SWA, variables, and secrets.
 - [**Database Design & Schema Guide**](docs/database-design.md): Entity-relationship diagrams, table specifications, indexing rationale, and audit history design.
 - [**REST API Reference Guide**](docs/api-guide.md): Standard request/response envelopes, authentication models, status codes, and endpoint directory.
-- [**Deployment & Operations Guide**](docs/deployment-guide.md): Local Docker Compose operations, Azure Terraform provisioning, and GitHub Actions CI/CD setup.
+- [**Deployment & Operations Guide**](docs/deployment-guide.md): Local Docker Compose operations, Azure Terraform provisioning, and deployment topology.
 - [**Security Architecture & Review**](docs/security-review.md): STRIDE threat modeling, RBAC enforcement, magic-bytes PDF inspection, and CSV formula injection defenses.
 - [**Quality Assurance & Testing Strategy**](docs/testing-strategy.md): Testing pyramid, MockMvc integration tests, Vitest component tests, and k6 load tests.
 - [**Cloud Cost Management & Budget Guide**](docs/cost-management.md): Student budget containment, scale-to-zero configuration, and teardown commands.

@@ -28,6 +28,16 @@ output "frontend_default_hostname" {
   description = "Default public URL of the deployed Azure Static Web App"
 }
 
+output "container_app_name" {
+  value       = azurerm_container_app.backend.name
+  description = "Name of the provisioned Azure Container App"
+}
+
+output "backend_fqdn" {
+  value       = azurerm_container_app.backend.latest_revision_fqdn
+  description = "FQDN of the backend Azure Container App"
+}
+
 output "postgresql_fqdn" {
   value       = var.enable_managed_database ? azurerm_postgresql_flexible_server.db[0].fqdn : "Managed PostgreSQL disabled (using local dev or Azure Container)"
   description = "Fully qualified domain name of PostgreSQL database server"

@@ -99,3 +99,55 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_service
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
 }
+
+# 9. Azure Container App (Backend Service with scale-to-zero)
+resource "azurerm_container_app" "backend" {
+  name                         = "ca-${var.project_name}-backend-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.env.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
+  tags                         = var.tags
+
+  template {
+    min_replicas = 0
+    max_replicas = 3
+
+    container {
+      name   = "backend"
+      image  = "mcr.microsoft.com/azuredocs/aci-helloworld:latest"
+      cpu    = 0.5
+      memory = "1Gi"
+
+      env {
+        name  = "PORT"
+        value = "8080"
+      }
+      env {
+        name  = "SPRING_PROFILES_ACTIVE"
+        value = "prod"
+      }
+    }
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 8080
+    transport        = "auto"
+
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+  }
+
+  secret {
+    name  = "acr-password"
+    value = azurerm_container_registry.acr.admin_password
+  }
+
+  registry {
+    server               = azurerm_container_registry.acr.login_server
+    username             = azurerm_container_registry.acr.admin_username
+    password_secret_name = "acr-password"
+  }
+}

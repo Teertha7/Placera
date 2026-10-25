@@ -155,32 +155,33 @@ flowchart LR
 
 ## 4. Continuous Integration & Continuous Deployment (CI/CD)
 
-The repository includes two automated workflows in `.github/workflows/`:
+The repository includes two automated workflows in `.github/workflows/` (see [CI/CD Pipeline Guide](cicd-pipeline.md) for full architecture and step-by-step setup):
 
 ### 4.1 CI Workflow (`.github/workflows/ci.yml`)
-- **Triggers**: On pull request and pushes to `main`.
+- **Triggers**: On pull request and pushes to `main`, `master`, and `feat/**`.
 - **Backend Job**:
-  - Sets up Temurin JDK 21.
-  - Caches Maven dependencies.
-  - Executes unit and integration tests (`mvn clean test`).
-  - Verifies multi-stage Docker build packaging.
+  - Sets up Eclipse Temurin JDK 21 with Maven caching.
+  - Executes unit and integration tests (`mvn clean test --batch-mode`).
+  - Packages executable Spring Boot JAR (`mvn package -DskipTests`).
+  - Uploads verified JAR as build artifact.
 - **Frontend Job**:
-  - Sets up Node.js 20.
-  - Caches npm dependencies.
-  - Runs Vitest unit tests (`npm test`).
-  - Runs TypeScript compilation & production build (`npm run build`).
-  - Verifies multi-stage Nginx Docker build.
+  - Sets up Node.js 22 with npm caching.
+  - Executes strict TypeScript typecheck (`tsc --noEmit`).
+  - Runs Vitest component unit tests (`npm test`).
+  - Compiles production bundle (`npm run build`).
+  - Uploads verified distribution as build artifact.
+- **Docker Validation Job**:
+  - Runs after backend and frontend checks pass.
+  - Builds and validates both backend and frontend multi-stage Docker images.
 
 ### 4.2 CD Workflow (`.github/workflows/deploy.yml`)
-- **Triggers**: On push to `main` (only when required secrets are configured).
+- **Triggers**: Executed via `workflow_run` automatically when CI completes successfully on the `main` branch (or via manual `workflow_dispatch`).
 - **Authentication**: Uses secure OpenID Connect (OIDC) federation with Azure (`azure/login@v2`), eliminating the need to store long-lived management credentials in GitHub.
 - **Backend Pipeline**:
   - Logs into Azure Container Registry (`az acr login`).
-  - Builds and tags the backend image with the git commit SHA.
-  - Pushes to ACR.
-  - Updates the Azure Container App revision with zero-downtime rolling updates.
+  - Builds and tags the backend image with commit SHA, short SHA, and `latest`.
+  - Pushes to ACR and updates the Azure Container App revision with zero-downtime rolling updates.
 - **Frontend Pipeline**:
-  - Builds production bundle (`npm run build`).
   - Deploys static build artifacts to Azure Static Web Apps using `Azure/static-web-apps-deploy@v1`.
 
 ### 4.3 Required GitHub Secrets

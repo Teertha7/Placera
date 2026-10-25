@@ -1,50 +1,47 @@
 name: Continuous Deployment (Azure Cloud)
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    branches: [main]
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
+  id-token: write
 
 jobs:
-  verify-and-deploy:
-    name: Conditional Azure Cloud Deployment
+  deploy-backend:
+    name: Deploy Backend (ACR & Azure Container Apps)
     runs-on: ubuntu-latest
-    # Skip deployment if Azure credentials are not configured in repository secrets
-    if: ${{ vars.AZURE_CLIENT_ID != '' && vars.AZURE_SUBSCRIPTION_ID != '' }}
+    # Execute only after successful CI on main, and only when Azure OIDC credentials are configured
+    if: >-
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') &&
+      vars.AZURE_CLIENT_ID != '' &&
+      vars.AZURE_TENANT_ID != '' &&
+      vars.AZURE_SUBSCRIPTION_ID != ''
 
     steps:
+      - name: Resolve Target Git Commit SHA
+        id: commit_meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            TARGET_SHA="${{ github.event.workflow_run.head_sha }}"
+          else
+            TARGET_SHA="${{ github.sha }}"
+          fi
+          echo "sha=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$(echo ${TARGET_SHA} | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout Source Code
         uses: actions/checkout@v4
-
-      - name: Set up JDK 21 & Build Backend
-        uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
+          ref: ${{ steps.commit_meta.outputs.sha }}
 
-      - name: Compile & Test Backend
-        run: |
-          cd backend
-          mvn clean package --batch-mode
-
-      - name: Set up Node.js 22 & Build Frontend
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Build Frontend
-        run: |
-          cd frontend
-          npm ci
-          npm test
-          npm run build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Authenticate to Azure via GitHub OIDC Federation
         uses: azure/login@v2
@@ -58,18 +55,58 @@ jobs:
           az acr login --name ${{ vars.AZURE_CONTAINER_REGISTRY }}
 
       - name: Build and Push Backend Docker Image to ACR
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
-          tags: ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/placera-backend:${{ github.sha }}
+          tags: |
+            ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/placera-backend:${{ steps.commit_meta.outputs.sha }}
+            ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/placera-backend:${{ steps.commit_meta.outputs.short_sha }}
+            ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/placera-backend:latest
 
-      - name: Deploy Backend to Azure Container Apps
-        uses: azure/container-apps-deploy-action@v1
+      - name: Deploy Backend Revision to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name "${{ vars.AZURE_CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/placera-backend:${{ steps.commit_meta.outputs.sha }}"
+
+  deploy-frontend:
+    name: Deploy Frontend (Azure Static Web Apps)
+    runs-on: ubuntu-latest
+    # Execute only after successful CI on main, and only when Static Web Apps token is configured
+    if: >-
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') &&
+      secrets.AZURE_STATIC_WEB_APPS_API_TOKEN != ''
+
+    steps:
+      - name: Resolve Target Git Commit SHA
+        id: commit_meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            TARGET_SHA="${{ github.event.workflow_run.head_sha }}"
+          else
+            TARGET_SHA="${{ github.sha }}"
+          fi
+          echo "sha=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
         with:
-          imageToDeploy: ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/placera-backend:${{ github.sha }}
-          containerAppName: placera-backend-app
-          resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+          ref: ${{ steps.commit_meta.outputs.sha }}
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies & Build Frontend Bundle
+        run: |
+          cd frontend
+          npm ci
+          npm run build
 
       - name: Deploy Frontend to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -79,3 +116,4 @@ jobs:
           action: "upload"
           app_location: "frontend"
           output_location: "dist"
+          skip_app_build: true
